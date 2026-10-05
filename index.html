@@ -38,10 +38,6 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 .tag{display:block;font-size:10px;line-height:1.1;margin-top:5px;font-weight:800}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 
-.site-nav{display:flex;gap:10px;flex-wrap:wrap;max-width:1100px;margin:14px auto 0;padding:0 18px}
-.site-nav a{display:inline-block;padding:9px 14px;border-radius:999px;background:#fff;color:#4f2385;text-decoration:none;font-weight:800;border:2px solid #d8c8ec}
-.site-nav a:hover{background:#f1e9fa}
-
 .hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
 .learn-card{background:white;border:2px solid #e4d9ef;border-radius:16px;padding:18px}
 .learn-card h2{margin-top:0}
@@ -53,12 +49,7 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 
 </style></head><body>
 <header><div class="kicker">TECHQUITY / COMPUTER SCIENCE</div><h1>Sorting Algorithms — Start Here</h1><div class="lead">Why we sort, how Bubble Sort, Selection Sort and Quick Sort work, and the language you need before practising.</div></header>
-<nav class="site-nav">
-<a href="index.html">Start Here</a>
-<a href="we_learn.html">We Learn</a>
-<a href="you_learn.html">You Learn</a>
-<a href="lets_check_our_learning.html">Let's Check Our Learning</a>
-</nav>
+
 <main>
 <div class="panel"><h2>Why do computers sort things?</h2><p>Sorting puts data into a useful order so that people and programs can organise, compare and search it more easily. Different algorithms can produce the same sorted result while doing different amounts of work.</p></div>
 <div class="hero-grid">
@@ -80,5 +71,5 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 <tr><td>Selection Sort</td><td>Scan the unsorted section for its minimum</td><td>O(n²)</td><td>Still performs many comparisons, but normally only one swap per round.</td></tr>
 <tr><td>Quick Sort</td><td>Partition around pivots</td><td>Average O(n log n); worst O(n²)</td><td>Good pivots tend to create balanced groups; poor pivots can create uneven groups.</td></tr></table>
 <p><b>For our five-card classroom example:</b> focus first on accurately counting comparisons/scans, swaps and partitions. Big O describes how the algorithm scales when the input becomes much larger.</p></div>
-<div class="panel controls"><a class="primary" href="we_learn.html" style="text-decoration:none;padding:12px 18px;border-radius:10px">Continue to We Learn →</a></div>
+
 </main></body></html>

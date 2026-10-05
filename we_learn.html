@@ -26,17 +26,8 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 @media print{body>*:not(main),main>*:not(.cert){display:none!important}.cert{display:block!important}}
 
 
-.site-nav{display:flex;gap:10px;flex-wrap:wrap;max-width:1100px;margin:14px auto 0;padding:0 18px}
-.site-nav a{display:inline-block;padding:9px 14px;border-radius:999px;background:#fff;color:#4f2385;text-decoration:none;font-weight:800;border:2px solid #d8c8ec}
-.site-nav a:hover{background:#f1e9fa}
-
 </style></head><body>
-<header><div class="kicker">TECHQUITY / COMPUTER SCIENCE / WE LEARN</div><h1>Sorting with five cards</h1><div class="lead">Start unsorted: <b>3, 5, 2, 3, 1</b>. Follow exactly the same routines as the teacher card resource.</div></header><nav class="site-nav">
-<a href="index.html">Start Here</a>
-<a href="we_learn.html">We Learn</a>
-<a href="you_learn.html">You Learn</a>
-<a href="lets_check_our_learning.html">Let's Check Our Learning</a>
-</nav><main>
+<header><div class="kicker">TECHQUITY / COMPUTER SCIENCE / WE LEARN</div><h1>Sorting with five cards</h1><div class="lead">Start unsorted: <b>3, 5, 2, 3, 1</b>. Follow exactly the same routines as the teacher card resource.</div></header><main>
 <div class="panel controls"><label>Algorithm<select id="alg"><option value="bubble">Bubble Sort</option><option value="selection">Selection Sort</option><option value="quick">Quick Sort</option></select></label><label id="pivotWrap" style="display:none">Pivot rule<select id="pivot"><option value="first">First card</option><option value="last">Last card</option><option value="middle">Middle position</option></select></label><button id="reset">Reset</button><button id="prev">← Previous</button><button id="next" class="primary">Next →</button></div>
 <div id="rule" class="rule"></div><div class="panel"><div id="stage"></div><div id="msg" class="msg"></div><div class="stats"><div class="stat"><b id="c">0</b><small>Comparisons / scans</small></div><div class="stat"><b id="s">0</b><small>Pair swaps</small></div><div class="stat"><b id="p">0</b><small>Pass / round / partition</small></div><div class="stat"><b id="st">Ready</b><small>Status</small></div></div></div>
 <div id="selftest" style="display:none"></div></main><script>
