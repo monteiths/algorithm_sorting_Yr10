@@ -1,0 +1,84 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sorting Algorithms — Start Here</title><style>:root{--purple:#651394;--purple2:#8a35b4;--ink:#262331;--muted:#6e6a75;--paper:#fbfafc;--line:#ddd7e2;--yellow:#fff1b8;--yellowLine:#c69210;--green:#dff5e9;--greenLine:#23855f;--pink:#f0ddf8;--bad:#fde2e2;--badLine:#c73535}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+header,main{max-width:1080px;margin:auto;padding:18px}header{padding-bottom:7px}
+.kicker{font-weight:900;color:var(--purple);letter-spacing:.04em;font-size:.82rem}
+h1{color:var(--purple);font-size:clamp(1.7rem,4vw,2.65rem);margin:.3rem 0}.lead{color:var(--muted);line-height:1.5}
+.rule{background:var(--purple);color:white;padding:18px;border-radius:10px;font-weight:900;letter-spacing:.03em;margin:14px 0}
+.panel{background:white;border:1px solid #eee9f1;border-radius:13px;padding:16px;margin:12px 0;box-shadow:0 5px 20px rgba(52,35,66,.06)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}label{display:grid;gap:5px;font-size:.76rem;font-weight:900;color:var(--muted)}
+select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:white}button{cursor:pointer;font-weight:800}
+.primary{background:var(--purple);color:white;border-color:var(--purple)}button:disabled{opacity:.45;cursor:not-allowed}
+.cards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:130px;padding:18px 4px 34px}
+.card{width:74px;height:96px;border:2px solid #aaa5ae;border-radius:9px;background:#fff;display:grid;place-items:center;font-size:2.15rem;font-weight:900;position:relative;user-select:none}
+.card.active{background:var(--yellow);border-color:var(--yellowLine);color:#8b6500}.card.finished{background:var(--green);border-color:var(--greenLine);color:#116444}
+.card.pivot{background:var(--pink);border-color:var(--purple);color:var(--purple)}.card.bad{background:var(--bad);border-color:var(--badLine)}
+.card[draggable=true]{cursor:grab}.tag{position:absolute;bottom:-24px;font-size:.63rem;color:var(--muted);font-weight:900;white-space:nowrap}
+.msg{padding:13px 15px;border-left:5px solid var(--purple);background:#f5eef9;border-radius:8px;line-height:1.45;font-weight:700;min-height:50px}
+.msg.good{background:#edf9f2;border-color:var(--greenLine);color:#155d43}.msg.bad{background:#fff0f0;border-color:var(--badLine);color:#8d2424}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.stat{text-align:center;border:1px solid var(--line);border-radius:8px;padding:8px}.stat b{display:block;font-size:1.25rem}.stat small{color:var(--muted);font-weight:800}
+.bins{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.bin{min-height:125px;border:2px dashed var(--line);border-radius:10px;padding:10px;text-align:center}.bin h3{margin:0 0 8px;color:var(--purple);font-size:.86rem}.bin .cards{min-height:70px;padding:4px}
+.stepbox{background:#faf7fc;border-radius:10px;padding:13px;margin:8px 0}.stepbox b{color:var(--purple)}
+.cert{display:none;text-align:center;border:6px double var(--purple);padding:32px;background:white}.cert.show{display:block}
+.progress{height:9px;background:#e8e3eb;border-radius:99px;overflow:hidden}.progress div{height:100%;background:var(--purple)}
+@media(max-width:650px){.card{width:58px;height:78px;font-size:1.65rem}.bins{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media print{body>*:not(main),main>*:not(.cert){display:none!important}.cert{display:block!important}}
+
+.dropzone{border:3px dashed #bbb;border-radius:14px;min-height:76px;padding:14px;margin-top:14px;text-align:center;font-weight:800;display:flex;align-items:center;justify-content:center}
+.dropzone.over{border-color:#5a2ca0;background:#f2ebff}
+.dropzone.wrong,.card.wrong{background:#ffd9d9!important;border-color:#c62828!important;animation:shake .25s linear 2}
+.msg.bad{background:#ffe3e3;border-left:6px solid #c62828}
+.msg.good{background:#e6f4e8;border-left:6px solid #2e7d32}
+.card[draggable=true]{cursor:grab}.card[draggable=true]:active{cursor:grabbing}
+.card.dim{opacity:.42}
+.actionrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.bin{min-height:150px}
+.bin.dropzone{display:block;text-align:left}
+.bin h3{text-align:center}
+.tag{display:block;font-size:10px;line-height:1.1;margin-top:5px;font-weight:800}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.site-nav{display:flex;gap:10px;flex-wrap:wrap;max-width:1100px;margin:14px auto 0;padding:0 18px}
+.site-nav a{display:inline-block;padding:9px 14px;border-radius:999px;background:#fff;color:#4f2385;text-decoration:none;font-weight:800;border:2px solid #d8c8ec}
+.site-nav a:hover{background:#f1e9fa}
+
+.hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
+.learn-card{background:white;border:2px solid #e4d9ef;border-radius:16px;padding:18px}
+.learn-card h2{margin-top:0}
+
+
+.term-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.term{background:#f7f3fb;border-radius:12px;padding:14px}.eff{width:100%;border-collapse:collapse}.eff th,.eff td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+@media(max-width:760px){.hero-grid,.term-grid{grid-template-columns:1fr}}
+
+</style></head><body>
+<header><div class="kicker">TECHQUITY / COMPUTER SCIENCE</div><h1>Sorting Algorithms — Start Here</h1><div class="lead">Why we sort, how Bubble Sort, Selection Sort and Quick Sort work, and the language you need before practising.</div></header>
+<nav class="site-nav">
+<a href="index.html">Start Here</a>
+<a href="we_learn.html">We Learn</a>
+<a href="you_learn.html">You Learn</a>
+<a href="lets_check_our_learning.html">Let's Check Our Learning</a>
+</nav>
+<main>
+<div class="panel"><h2>Why do computers sort things?</h2><p>Sorting puts data into a useful order so that people and programs can organise, compare and search it more easily. Different algorithms can produce the same sorted result while doing different amounts of work.</p></div>
+<div class="hero-grid">
+<div class="learn-card"><h2>Bubble Sort</h2><p><b>COMPARE NEIGHBOURS → SWAP IF NEEDED → MOVE RIGHT</b></p><p>Repeatedly compares adjacent values. Large values gradually move towards the right.</p></div>
+<div class="learn-card"><h2>Selection Sort</h2><p><b>MARK MINIMUM → SCAN REMAINING VALUES → SWAP ONCE</b></p><p>Finds the minimum in the unsorted section, then places it into the next finished position.</p></div>
+<div class="learn-card"><h2>Quick Sort</h2><p><b>CHOOSE PIVOT → PARTITION → SORT OUTER GROUPS → JOIN</b></p><p>Uses a pivot to split values into LESS, EQUAL and GREATER groups, then sorts the outer groups recursively.</p></div>
+</div>
+<div class="panel"><h2>Key terminology</h2><div class="term-grid">
+<div class="term"><b>Algorithm</b><br>A precise sequence of steps for solving a problem.</div>
+<div class="term"><b>Comparison / scan</b><br>Looking at values to decide what should happen next.</div>
+<div class="term"><b>Swap</b><br>Exchanging the positions of two cards.</div>
+<div class="term"><b>Pivot</b><br>The Quick Sort reference value used to divide cards into LESS, EQUAL and GREATER groups.</div>
+<div class="term"><b>Partition</b><br>Classifying a Quick Sort group around its pivot.</div>
+<div class="term"><b>Recursion</b><br>Applying the same sorting process again to smaller groups.</div>
+</div></div>
+<div class="panel"><h2>Efficiency — how much work?</h2><p>Efficiency describes how the amount of work grows as the list gets larger. We often write this using <b>Big O notation</b>.</p>
+<table class="eff"><tr><th>Algorithm</th><th>Typical idea</th><th>Efficiency</th><th>What to notice</th></tr>
+<tr><td>Bubble Sort</td><td>Repeated neighbour comparisons</td><td>Usually O(n²)</td><td>Simple to understand, but work grows quickly on large lists.</td></tr>
+<tr><td>Selection Sort</td><td>Scan the unsorted section for its minimum</td><td>O(n²)</td><td>Still performs many comparisons, but normally only one swap per round.</td></tr>
+<tr><td>Quick Sort</td><td>Partition around pivots</td><td>Average O(n log n); worst O(n²)</td><td>Good pivots tend to create balanced groups; poor pivots can create uneven groups.</td></tr></table>
+<p><b>For our five-card classroom example:</b> focus first on accurately counting comparisons/scans, swaps and partitions. Big O describes how the algorithm scales when the input becomes much larger.</p></div>
+<div class="panel controls"><a class="primary" href="we_learn.html" style="text-decoration:none;padding:12px 18px;border-radius:10px">Continue to We Learn →</a></div>
+</main></body></html>
