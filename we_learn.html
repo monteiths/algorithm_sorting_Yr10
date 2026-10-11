@@ -91,11 +91,14 @@ function quickTrace(input,rule){
   if(arr.length<=1)return [...arr];
   let pivot=pivotFor(arr,rule),less=[],equal=[],greater=[];parts++;
   events.push({type:"partitionStart",arr:[...arr],pivot,path,parts,scans});
-  arr.forEach((v,idx)=>{
+  const pivotIndex=rule==="first"?0:rule==="last"?arr.length-1:midIndex(arr.length);
+  const visitOrder=[pivotIndex,...arr.map((_,i)=>i).filter(i=>i!==pivotIndex)];
+  let classified=[];
+  visitOrder.forEach(idx=>{const v=arr[idx];classified.push(idx);
    scans++;
    let group=v<pivot?"less":v>pivot?"greater":"equal";
    if(group==="less")less.push(v);else if(group==="greater")greater.push(v);else equal.push(v);
-   events.push({type:"classify",arr:[...arr],pivot,value:v,index:idx,group,less:[...less],equal:[...equal],greater:[...greater],parts,scans,path});
+   events.push({type:"classify",arr:[...arr],pivot,value:v,index:idx,group,less:[...less],equal:[...equal],greater:[...greater],parts,scans,path,classified:[...classified]});
   });
   let L=q(less,path+".L"),G=q(greater,path+".G");
   let joined=[...L,...equal,...G];events.push({type:"join",pivot,path,joined:[...joined],parts,scans});
@@ -318,10 +321,10 @@ function render(){
    stage.innerHTML=`${cards(base,e&&e.type==="classify"?[e.index]:[],[],pivotIndex)}${bins}`;
    if(e?.type==="classify"){
     const row=stage.querySelector(".cards");
-    [...row.children].forEach((card,k)=>{if(k<=e.index)card.style.visibility="hidden";});
+    [...row.children].forEach((card,k)=>{if(e.classified.includes(k))card.style.visibility="hidden";});
    }
    $("c").textContent=e?e.scans:0;$("s").textContent=0;$("p").textContent=e?e.parts:0;
-   $("msg").textContent=!e?`Choose the ${$("pivot").value} pivot (${pv}). The pivot is not moved. Scan the group from left to right and classify each card into LESS / EQUAL / GREATER.`:e.type==="partitionStart"?`New group: choose pivot ${e.pivot}. Do not move it; begin classifying from the left.`:e.type==="classify"?`Scan ${e.value}: place it in ${e.group.toUpperCase()}. Order of arrival is preserved.`:`Join sorted less + equal + sorted greater: ${e.joined.join(", ")}.`;
+   $("msg").textContent=!e?`Choose the ${$("pivot").value} pivot (${pv}). Move the chosen pivot into EQUAL first, then classify the remaining cards into LESS / EQUAL / GREATER.`:e.type==="partitionStart"?`New group: choose pivot ${e.pivot}. Move the pivot into EQUAL first, then classify the other cards.`:e.type==="classify"?`Scan ${e.value}: place it in ${e.group.toUpperCase()}. Order of arrival is preserved.`:`Join sorted less + equal + sorted greater: ${e.joined.join(", ")}.`;
    $("st").textContent="Watching";
  }
 }
