@@ -137,7 +137,7 @@ function animateCardExchange(left,right,before){
  overlay.setAttribute("aria-hidden","true");
  overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:visible";
  document.body.appendChild(overlay);
- const duration=925,dx=rr.left-lr.left,dy=rr.top-lr.top;
+ const duration=1850,dx=rr.left-lr.left,dy=rr.top-lr.top;
  const create=(value,rect)=>{
    const node=L.cloneNode(false);
    node.textContent=value;
@@ -147,7 +147,7 @@ function animateCardExchange(left,right,before){
  };
  const leftCard=create(before[left],lr),rightCard=create(before[right],rr);
  const easing="cubic-bezier(.45,0,.55,1)";
- const arc=Math.max(175,Math.min(235,window.innerHeight*.25));
+ const arc=Math.max(87.5,Math.min(117.5,window.innerHeight*.125));
  const up=leftCard.animate([
   {transform:"translate(0px,0px) scale(1)",offset:0},
   {transform:`translate(${dx*.22}px,${-arc*.8}px) rotate(-7deg) scale(1.17)`,offset:.25},
@@ -168,39 +168,40 @@ function animateCardExchange(left,right,before){
 }
 
 
-function animateSelectionHoldingAreas(){
+let selectionAnimating=false;
+function animateSelectionHoldingAreas(reverse=false){
  const stage=$("stage"),e=trace.steps[idx];
- if(!e||e.type!=="scan")return;
+ if(!e||e.type!=="scan")return Promise.resolve();
  const bays=[stage.querySelector('[data-selection-dest="keep"]'),stage.querySelector('[data-selection-dest="new"]')];
  const sources=[e.oldMin,e.j].map(i=>stage.querySelector('[data-source-index="'+i+'"]'));
- if(bays.some(v=>!v)||sources.some(v=>!v))return;
- // The card row retains dashed empty positions while the two actual card faces
- // travel along wide, opposing sweeping arcs into their respective holding boxes.
+ if(bays.some(v=>!v)||sources.some(v=>!v))return Promise.resolve();
  const overlay=document.createElement("div");
  overlay.setAttribute("aria-hidden","true");
  overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:visible";
  document.body.appendChild(overlay);
  const animations=[];
  bays.forEach((target,k)=>{
-   const from=sources[k].getBoundingClientRect(),to=target.getBoundingClientRect();
-   const dx=to.left-from.left,dy=to.top-from.top;
-   const ghost=target.cloneNode(false);
-   ghost.textContent=e.state[k===0?e.oldMin:e.j];
-   ghost.className="selection-bay-card";
-   ghost.style.cssText=`position:absolute;margin:0;left:${from.left}px;top:${from.top}px;width:${from.width}px;height:${from.height}px;display:grid;place-items:center;box-sizing:border-box;background:var(--yellow);border:2px solid var(--yellowLine);border-radius:9px;font-size:2.15rem;font-weight:900;color:#8b6500;box-shadow:0 10px 24px #3b225455`;
-   overlay.appendChild(ghost);
-   target.style.visibility="hidden";
-   const sweep=k===0?-105:105;
-   const animation=ghost.animate([
-     {transform:"translate(0px,0px) scale(1)",offset:0},
-     {transform:`translate(${dx*.25}px,${dy*.25+sweep*.7}px) scale(1.12)`,offset:.25},
-     {transform:`translate(${dx*.5}px,${dy*.5+sweep}px) scale(1.2)`,offset:.5},
-     {transform:`translate(${dx*.75}px,${dy*.75+sweep*.7}px) scale(1.12)`,offset:.75},
-     {transform:`translate(${dx}px,${dy}px) scale(1)`,offset:1}
-   ],{duration:1300,easing:"cubic-bezier(.45,0,.55,1)",fill:"forwards"});
-   animations.push(animation.finished.catch(()=>{}));
+  const from=sources[k].getBoundingClientRect(),to=target.getBoundingClientRect();
+  const dx=to.left-from.left,dy=to.top-from.top;
+  const ghost=document.createElement("div");
+  ghost.textContent=e.state[k===0?e.oldMin:e.j];
+  ghost.className="selection-bay-card";
+  const origin=reverse?to:from;
+  ghost.style.cssText=`position:absolute;margin:0;left:${origin.left}px;top:${origin.top}px;width:${origin.width}px;height:${origin.height}px;display:grid;place-items:center;box-sizing:border-box;background:var(--yellow);border:2px solid var(--yellowLine);border-radius:9px;font-size:2.15rem;font-weight:900;color:#8b6500;box-shadow:0 10px 24px #3b225455`;
+  overlay.appendChild(ghost);
+  target.style.visibility="hidden";
+  const x=reverse?-dx:dx, yy=reverse?-dy:dy, sweep=(k===0?-75:75)*(reverse?-1:1);
+  const keyframes=[
+   {transform:"translate(0px,0px) scale(1)",offset:0},
+   {transform:`translate(${x*.25}px,${yy*.25+sweep*.7}px) scale(1.08)`,offset:.25},
+   {transform:`translate(${x*.5}px,${yy*.5+sweep}px) scale(1.13)`,offset:.5},
+   {transform:`translate(${x*.75}px,${yy*.75+sweep*.7}px) scale(1.08)`,offset:.75},
+   {transform:`translate(${x}px,${yy}px) scale(1)`,offset:1}
+  ];
+  const animation=ghost.animate(keyframes,{duration:1150,easing:"cubic-bezier(.45,0,.55,1)",fill:"forwards"});
+  animations.push(animation.finished.catch(()=>{}));
  });
- Promise.all(animations).then(()=>{overlay.remove();bays.forEach(v=>v.style.visibility="")});
+ return Promise.all(animations).then(()=>{overlay.remove();bays.forEach(v=>v.style.visibility="")});
 }
 
 function render(){
@@ -301,6 +302,37 @@ function render(){
    $("st").textContent="Watching";
  }
 }
-$("next").onclick=()=>{let n=$("alg").value==="quick"?trace.events.length:trace.steps.length;if(idx<n)idx++;render();const e=$("alg").value==="bubble"?trace.steps[idx]:null;if(e&&e.type==="decision"&&e.swap)animateCardExchange(e.i,e.j,e.before);if(e&&e.type==="scan"&&$("alg").value==="selection")animateSelectionHoldingAreas()};$("prev").onclick=()=>{if(idx>=0)idx--;render()};$("reset").onclick=reset;$("alg").onchange=reset;$("pivot").onchange=reset;reset();
+async function moveStep(direction){
+ if(selectionAnimating)return;
+ const alg=$("alg").value,steps=alg==="quick"?trace.events:trace.steps;
+ const nextIndex=Math.max(-1,Math.min(steps.length,idx+direction));
+ if(nextIndex===idx)return;
+ selectionAnimating=true;$("next").disabled=true;$("prev").disabled=true;
+ try{
+  // Let the learner watch the physical cards return to their empty positions
+  // before the next comparison replaces the placeholders with real cards.
+  if(alg==="selection"&&trace.steps[idx]?.type==="scan"){
+   await animateSelectionHoldingAreas(true);
+  }
+  idx=nextIndex;render();
+  if(alg==="bubble"){
+   const e=trace.steps[idx];
+   if(e&&e.type==="decision"&&e.swap&&direction>0)animateCardExchange(e.i,e.j,e.before);
+  }
+  if(alg==="selection"&&trace.steps[idx]?.type==="scan"){
+   await animateSelectionHoldingAreas(false);
+  }
+ }finally{
+  selectionAnimating=false;
+  $("next").disabled=false;
+  $("prev").disabled=idx<0;
+ }
+}
+$("next").onclick=()=>moveStep(1);
+$("prev").onclick=()=>moveStep(-1);
+$("reset").onclick=()=>{if(!selectionAnimating)reset()};
+$("alg").onchange=()=>{if(!selectionAnimating)reset()};
+$("pivot").onchange=()=>{if(!selectionAnimating)reset()};
+reset();
 let f=selfTests();if(location.search.includes("selftest")){$("selftest").style.display="block";$("selftest").textContent=f.length?"SELFTEST FAIL: "+f.join(", "):"SELFTEST PASS";}
 </script></body></html>
