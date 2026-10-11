@@ -130,21 +130,39 @@ function bind(){
 
 // Animate a genuine exchange from the previous card positions to the new positions.
 // Call after the new cards have been rendered; no algorithm counts are affected.
-function animateCardExchange(left,right){
+function animateCardExchange(left,right,before){
  const cards=[...document.querySelectorAll("#stage > .cards > .card")];
- if(!cards[left]||!cards[right])return;
- const x=cards[right].getBoundingClientRect().left-cards[left].getBoundingClientRect().left;
- if(!x)return;
- const first=cards[left],second=cards[right];
- first.classList.add("swap-moving","swap-over");second.classList.add("swap-moving");
- first.style.transform=`translate(${x}px,-18px)`;
- second.style.transform=`translate(${-x}px,18px)`;
- // New DOM holds the swapped values. Start them at their old positions and move into place.
- requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  first.style.transform="translate(0,0)";second.style.transform="translate(0,0)";
- }));
- const tidy=()=>{first.classList.remove("swap-moving","swap-over");second.classList.remove("swap-moving");first.style.transform="";second.style.transform=""};
- setTimeout(tidy,800);
+ if(!cards[left]||!cards[right]||!before)return;
+ const L=cards[left],R=cards[right],lr=L.getBoundingClientRect(),rr=R.getBoundingClientRect();
+ // The final values have already been rendered. Hide them while two temporary
+ // cards with the ORIGINAL values visibly travel along opposite sweeping arcs.
+ L.style.visibility="hidden";R.style.visibility="hidden";
+ const overlay=document.createElement("div");
+ overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:visible";
+ document.body.appendChild(overlay);
+ const duration=1150,dx=rr.left-lr.left,dy=rr.top-lr.top;
+ const create=(value,rect)=>{
+   const node=L.cloneNode(false);
+   node.textContent=value;
+   node.className="card active";
+   node.style.cssText=`position:absolute;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;box-sizing:border-box;display:grid;place-items:center;transform-origin:center;box-shadow:0 8px 18px rgba(45,20,65,.2)`;
+   overlay.appendChild(node);return node;
+ };
+ const leftCard=create(before[left],lr),rightCard=create(before[right],rr);
+ const easing="cubic-bezier(.38,.02,.23,1)";
+ const up=leftCard.animate([
+  {transform:"translate(0px,0px) scale(1)",offset:0},
+  {transform:`translate(${dx*.5}px,-95px) scale(1.15)`,offset:.5},
+  {transform:`translate(${dx}px,${dy}px) scale(1)`,offset:1}
+ ],{duration,easing,fill:"forwards"});
+ const down=rightCard.animate([
+  {transform:"translate(0px,0px) scale(1)",offset:0},
+  {transform:`translate(${-dx*.5}px,95px) scale(1.15)`,offset:.5},
+  {transform:`translate(${-dx}px,${-dy}px) scale(1)`,offset:1}
+ ],{duration,easing,fill:"forwards"});
+ Promise.all([up.finished.catch(()=>{}),down.finished.catch(()=>{})]).then(()=>{
+  overlay.remove();L.style.visibility="";R.style.visibility="";
+ });
 }
 
 function render(){
@@ -172,7 +190,7 @@ function advanceBubble(){
 function bubbleSwap(i,j,target){
  if(!((i===bI&&j===bI+1)||(j===bI&&i===bI+1))) return flashWrong(target,"Bubble Sort can only move the two highlighted neighbours.");
  if(a[bI]<=a[bI+1]) return flashWrong(target,"these cards are already in order. Use KEEP / NO SWAP.");
- const swapAt=bI;[a[bI],a[bI+1]]=[a[bI+1],a[bI]];S++;advanceBubble();animateCardExchange(swapAt,swapAt+1);
+ const swapAt=bI,before=[...a];[a[bI],a[bI+1]]=[a[bI+1],a[bI]];S++;advanceBubble();animateCardExchange(swapAt,swapAt+1,before);
 }
 
 // ---------- SELECTION ----------
@@ -230,7 +248,7 @@ function selectionSwap(i,j,target){
  if(selPhase!=="swap") return flashWrong(target,"finish the full scan before swapping.");
  if(selMin===selPos) return flashWrong(target,"the minimum is already first; no swap is needed.");
  if(!((i===selMin&&j===selPos)||(j===selMin&&i===selPos))) return flashWrong(target,"swap only the MINIMUM with the FIRST UNSORTED card.");
- const left=selPos,right=selMin;[a[selPos],a[selMin]]=[a[selMin],a[selPos]];S++;nextSelectionRound();animateCardExchange(left,right);
+ const left=selPos,right=selMin,before=[...a];[a[selPos],a[selMin]]=[a[selMin],a[selPos]];S++;nextSelectionRound();animateCardExchange(left,right,before);
 }
 
 // ---------- QUICK ----------
