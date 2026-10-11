@@ -325,6 +325,9 @@ async function animateSelectionTransition(current,incoming){
   const animation=ghost.animate([{transform:"translate(0,0)"},{transform:`translate(${dx*.5}px,${dy*.5-48}px) scale(1.12)`,offset:.5},{transform:`translate(${dx}px,${dy}px)`}],{duration:1150,easing:"cubic-bezier(.45,0,.55,1)",fill:"forwards"});
   animations.push(animation.finished.catch(()=>{}));
  };
+ // A travelling card must no longer appear in its departure box.
+ // The animated ghost is the only visible copy until it reaches its destination.
+ candidate.style.visibility="hidden";
  // Keep the minimum parked in its box unless a smaller candidate replaces it.
  if(winning){
   travel(current.state[current.oldMin],fromKeep,oldPosition?.getBoundingClientRect());
@@ -349,6 +352,7 @@ async function animateSelectionTransition(current,incoming){
  }
 
  overlay.remove();
+ candidate.style.visibility="";
 }
 async function animateSelectionFinalPlacement(current){
  const stage=$("stage"),track=[...stage.querySelectorAll(".selection-track > *")];
