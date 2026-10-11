@@ -33,6 +33,15 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 @media(prefers-reduced-motion:reduce){.card.swap-moving{transition-duration:0ms}}
 
 .selection-choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.selection-choice{border:3px dashed #b8a4c7;border-radius:13px;padding:12px;min-height:105px;background:#fbf8fd;text-align:center}.selection-choice strong{display:block;color:var(--purple);font-size:.91rem}.selection-choice .choice-value{font-size:1.9rem;font-weight:900;margin:6px auto}.selection-choice.chosen{border-color:var(--greenLine);background:#eaf8ef}.selection-choice.chosen strong{color:#116444}.selection-choice small{display:block;color:var(--muted)}@media(max-width:550px){.selection-choices{grid-template-columns:1fr}}
+
+/* Selection Sort: physical cards leave numbered placeholders and travel to decision bays. */
+.selection-track{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:130px;padding:18px 4px 34px}
+.selection-placeholder{width:74px;height:96px;border:3px dashed #b9a7c8;border-radius:9px;display:grid;place-items:center;background:#faf5fd;color:#765b8d;font-size:.72rem;font-weight:800;text-align:center;position:relative}
+.selection-placeholder .position-label{position:absolute;bottom:-24px;white-space:nowrap;color:var(--muted);font-size:.65rem}
+.selection-bay-card{width:74px;height:96px;margin:8px auto 4px;border:2px solid var(--yellowLine);border-radius:9px;background:var(--yellow);display:grid;place-items:center;font-size:2.15rem;font-weight:900;color:#8b6500;box-shadow:0 6px 12px #3b225422}
+.selection-choice.chosen .selection-bay-card{border-color:var(--greenLine);background:var(--green);color:#116444}
+.selection-choice .selection-bay-card{position:relative}
+@media(max-width:650px){.selection-placeholder,.selection-bay-card{width:58px;height:78px;font-size:1.65rem}}
 </style></head><body>
 <header><div class="kicker">TECHQUITY / COMPUTER SCIENCE / WE LEARN</div><h1>Sorting with five cards</h1><div class="lead">Start unsorted: <b>3, 5, 2, 3, 1</b>. Follow exactly the same routines as the teacher card resource.</div></header><main>
 <div class="panel controls"><label>Algorithm<select id="alg"><option value="bubble">Bubble Sort</option><option value="selection">Selection Sort</option><option value="quick">Quick Sort</option></select></label><label id="pivotWrap" style="display:none">Pivot rule<select id="pivot"><option value="first">First card</option><option value="last">Last card</option><option value="middle">Middle position</option></select></label><button id="reset">Reset</button><button id="prev">← Previous</button><button id="next" class="primary">Next →</button></div>
@@ -152,6 +161,25 @@ function animateCardExchange(left,right,before){
  });
 }
 
+
+function animateSelectionHoldingAreas(){
+ const stage=$("stage"),bays=[["keep",stage.querySelector('[data-selection-dest="keep"]')],["new",stage.querySelector('[data-selection-dest="new"]')]];
+ const e=trace.steps[idx];if(!e||e.type!=="scan")return;
+ const positions=[e.oldMin,e.j];
+ const sources=positions.map(i=>stage.querySelector('[data-source-index="'+i+'"]'));
+ if(sources.some(x=>!x)||bays.some(x=>!x[1]))return;
+ // The original positions stay empty. The actual values sweep down to their holding areas.
+ bays.forEach(([name,target],k)=>{
+   const from=sources[k].getBoundingClientRect(),to=target.getBoundingClientRect();
+   const dx=from.left-to.left,dy=from.top-to.top;
+   target.animate([
+    {transform:`translate(${dx}px,${dy}px) scale(1.05)`,opacity:1},
+    {transform:`translate(${dx*.42}px,${dy*.4-35}px) scale(1.13)`,opacity:1,offset:.53},
+    {transform:"translate(0px,0px) scale(1)",opacity:1}
+   ],{duration:1050,easing:"cubic-bezier(.2,.75,.25,1)"});
+ });
+}
+
 function render(){
  let alg=$("alg").value,stage=$("stage");$("prev").disabled=idx<0;
 
@@ -191,14 +219,24 @@ function render(){
      if(e.type==="selswap") active=[e.pos,e.min];
      if(e.type==="selfixed") fin=Array.from({length:e.pos+1},(_,k)=>k);
    }
-   stage.innerHTML=cards(arr,active,fin);
    if(e&&e.type==="scan"){
+     // Two physical cards are lifted from the row, leaving visible position markers.
      const oldMin=e.state[e.oldMin],candidate=e.state[e.j],newMin=e.state[e.min];
      const choice=e.min===e.j?"new":"keep";
-     stage.innerHTML+=`<div class="selection-choices" aria-label="Selection sort decision holding areas">
-      <div class="selection-choice ${choice==="keep"?"chosen":""}"><strong>KEEP CURRENT MINIMUM</strong><div class="choice-value">${oldMin}</div><small>${choice==="keep"?"✓ Chosen: candidate "+candidate+" is not smaller":"Current minimum before decision"}</small></div>
-      <div class="selection-choice ${choice==="new"?"chosen":""}"><strong>MAKE CANDIDATE THE NEW MINIMUM</strong><div class="choice-value">${candidate}</div><small>${choice==="new"?"✓ Chosen: "+candidate+" is smaller than "+oldMin:"Candidate being tested"}</small></div>
-     </div><div class="msg good">Current minimum after this comparison: ${newMin}. Only after checking every candidate do we swap into the first unsorted position.</div>`;
+     const held=new Set([e.oldMin,e.j]);
+     stage.innerHTML=`<div class="selection-track">${e.state.map((v,k)=>held.has(k)
+       ?`<div class="selection-placeholder" data-source-index="${k}"><span>EMPTY</span><span class="position-label">Position ${k+1}</span></div>`
+       :`<div class="card ${k<e.pos?"finished":""}">${v}</div>`).join("")}</div>
+       <div class="selection-choices" aria-label="Selection sort decision holding areas">
+         <div class="selection-choice ${choice==="keep"?"chosen":""}"><strong>KEEP CURRENT MINIMUM</strong>
+           <div class="selection-bay-card" data-selection-dest="keep">${oldMin}</div>
+           <small>${choice==="keep"?"✓ Keep "+oldMin+" as minimum":"Current minimum before decision"}</small></div>
+         <div class="selection-choice ${choice==="new"?"chosen":""}"><strong>MAKE CANDIDATE THE NEW MINIMUM</strong>
+           <div class="selection-bay-card" data-selection-dest="new">${candidate}</div>
+           <small>${choice==="new"?"✓ "+candidate+" replaces "+oldMin:"Candidate "+candidate+" is being tested"}</small></div>
+       </div><div class="msg good">Current minimum after comparison: ${newMin}. The cards return to their numbered positions for the next scan; no swap occurs until the full scan finishes.</div>`;
+   }else{
+     stage.innerHTML=cards(arr,active,fin);
    }
    $("c").textContent=e?e.C:0;$("s").textContent=e?e.S:0;$("p").textContent=e?e.round:0;
    if(!e){
@@ -240,6 +278,6 @@ function render(){
    $("st").textContent="Watching";
  }
 }
-$("next").onclick=()=>{let n=$("alg").value==="quick"?trace.events.length:trace.steps.length;if(idx<n)idx++;render();const e=$("alg").value==="bubble"?trace.steps[idx]:null;if(e&&e.type==="decision"&&e.swap)animateCardExchange(e.i,e.j,e.before)};$("prev").onclick=()=>{if(idx>=0)idx--;render()};$("reset").onclick=reset;$("alg").onchange=reset;$("pivot").onchange=reset;reset();
+$("next").onclick=()=>{let n=$("alg").value==="quick"?trace.events.length:trace.steps.length;if(idx<n)idx++;render();const e=$("alg").value==="bubble"?trace.steps[idx]:null;if(e&&e.type==="decision"&&e.swap)animateCardExchange(e.i,e.j,e.before);if(e&&e.type==="scan"&&$("alg").value==="selection")animateSelectionHoldingAreas()};$("prev").onclick=()=>{if(idx>=0)idx--;render()};$("reset").onclick=reset;$("alg").onchange=reset;$("pivot").onchange=reset;reset();
 let f=selfTests();if(location.search.includes("selftest")){$("selftest").style.display="block";$("selftest").textContent=f.length?"SELFTEST FAIL: "+f.join(", "):"SELFTEST PASS";}
 </script></body></html>
