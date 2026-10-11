@@ -48,6 +48,8 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 .card.swap-moving{z-index:3;transition:transform 750ms cubic-bezier(.25,.7,.25,1);will-change:transform}
 .card.swap-moving.swap-over{z-index:4}
 @media(prefers-reduced-motion:reduce){.card.swap-moving{transition-duration:0ms}}
+
+.selection-choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.selection-choice{border:3px dashed #b8a4c7;border-radius:13px;padding:12px;min-height:105px;background:#fbf8fd;text-align:center}.selection-choice strong{display:block;color:var(--purple);font-size:.91rem}.selection-choice .choice-value{font-size:1.9rem;font-weight:900;margin:6px auto}.selection-choice.chosen{border-color:var(--greenLine);background:#eaf8ef}.selection-choice.chosen strong{color:#116444}.selection-choice small{display:block;color:var(--muted)}@media(max-width:550px){.selection-choices{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -187,8 +189,8 @@ function renderSelection(){
    if(selJ>=a.length){selPhase="swap";return renderSelection()}
    $("stage").innerHTML=`<div class="cards">${a.map((v,k)=>card(v,k,k===selMin||k===selJ?"active":k<selPos?"finished":"",k===selMin?"MINIMUM":k===selJ?"CANDIDATE":"")).join("")}</div>
    <div class="actionrow">
-    <div class="dropzone" data-zone="keepmin">KEEP CURRENT MINIMUM</div>
-    <div class="dropzone" data-zone="newmin">MAKE CANDIDATE THE NEW MINIMUM</div>
+    <div class="dropzone selection-choice" data-zone="keepmin"><strong>KEEP CURRENT MINIMUM</strong><div class="choice-value">${a[selMin]}</div><small>Candidate ${a[selJ]} is not smaller</small></div>
+    <div class="dropzone selection-choice" data-zone="newmin"><strong>MAKE CANDIDATE THE NEW MINIMUM</strong><div class="choice-value">${a[selJ]}</div><small>Candidate ${a[selJ]} is smaller</small></div>
    </div>`;
    setMsg(`Round ${selPos+1}: scan candidate ${a[selJ]} against current minimum ${a[selMin]}. Drag the CANDIDATE to the correct decision box.`);
    return;
