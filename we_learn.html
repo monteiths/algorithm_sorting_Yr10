@@ -31,6 +31,8 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 .card.swap-moving{z-index:3;transition:transform 750ms cubic-bezier(.25,.7,.25,1);will-change:transform}
 .card.swap-moving.swap-over{z-index:4}
 @media(prefers-reduced-motion:reduce){.card.swap-moving{transition-duration:0ms}}
+
+.selection-choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.selection-choice{border:3px dashed #b8a4c7;border-radius:13px;padding:12px;min-height:105px;background:#fbf8fd;text-align:center}.selection-choice strong{display:block;color:var(--purple);font-size:.91rem}.selection-choice .choice-value{font-size:1.9rem;font-weight:900;margin:6px auto}.selection-choice.chosen{border-color:var(--greenLine);background:#eaf8ef}.selection-choice.chosen strong{color:#116444}.selection-choice small{display:block;color:var(--muted)}@media(max-width:550px){.selection-choices{grid-template-columns:1fr}}
 </style></head><body>
 <header><div class="kicker">TECHQUITY / COMPUTER SCIENCE / WE LEARN</div><h1>Sorting with five cards</h1><div class="lead">Start unsorted: <b>3, 5, 2, 3, 1</b>. Follow exactly the same routines as the teacher card resource.</div></header><main>
 <div class="panel controls"><label>Algorithm<select id="alg"><option value="bubble">Bubble Sort</option><option value="selection">Selection Sort</option><option value="quick">Quick Sort</option></select></label><label id="pivotWrap" style="display:none">Pivot rule<select id="pivot"><option value="first">First card</option><option value="last">Last card</option><option value="middle">Middle position</option></select></label><button id="reset">Reset</button><button id="prev">← Previous</button><button id="next" class="primary">Next →</button></div>
@@ -172,6 +174,14 @@ function render(){
      if(e.type==="selfixed") fin=Array.from({length:e.pos+1},(_,k)=>k);
    }
    stage.innerHTML=cards(arr,active,fin);
+   if(e&&e.type==="scan"){
+     const oldMin=e.state[e.oldMin],candidate=e.state[e.j],newMin=e.state[e.min];
+     const choice=e.min===e.j?"new":"keep";
+     stage.innerHTML+=`<div class="selection-choices" aria-label="Selection sort decision holding areas">
+      <div class="selection-choice ${choice==="keep"?"chosen":""}"><strong>KEEP CURRENT MINIMUM</strong><div class="choice-value">${oldMin}</div><small>${choice==="keep"?"✓ Chosen: candidate "+candidate+" is not smaller":"Current minimum before decision"}</small></div>
+      <div class="selection-choice ${choice==="new"?"chosen":""}"><strong>MAKE CANDIDATE THE NEW MINIMUM</strong><div class="choice-value">${candidate}</div><small>${choice==="new"?"✓ Chosen: "+candidate+" is smaller than "+oldMin:"Candidate being tested"}</small></div>
+     </div><div class="msg good">Current minimum after this comparison: ${newMin}. Only after checking every candidate do we swap into the first unsorted position.</div>`;
+   }
    $("c").textContent=e?e.C:0;$("s").textContent=e?e.S:0;$("p").textContent=e?e.round:0;
    if(!e){
      $("msg").textContent="Round 1: mark 3 as the starting minimum. Scan every remaining card from left to right: 5, 2, 3, 1.";
