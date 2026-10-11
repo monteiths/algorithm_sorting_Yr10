@@ -43,6 +43,11 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 .tag{display:block;font-size:10px;line-height:1.1;margin-top:5px;font-weight:800}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 
+
+/* Card exchange: two cards visibly cross paths rather than teleport. */
+.card.swap-moving{z-index:3;transition:transform 750ms cubic-bezier(.25,.7,.25,1);will-change:transform}
+.card.swap-moving.swap-over{z-index:4}
+@media(prefers-reduced-motion:reduce){.card.swap-moving{transition-duration:0ms}}
 </style>
 </head>
 <body>
@@ -120,6 +125,26 @@ function bind(){
    z.ondrop=e=>{e.preventDefault();e.stopPropagation();z.classList.remove("over");dropOnZone(z.dataset.zone,z)};
  });
 }
+
+// Animate a genuine exchange from the previous card positions to the new positions.
+// Call after the new cards have been rendered; no algorithm counts are affected.
+function animateCardExchange(left,right){
+ const cards=[...document.querySelectorAll("#stage > .cards > .card")];
+ if(!cards[left]||!cards[right])return;
+ const x=cards[right].getBoundingClientRect().left-cards[left].getBoundingClientRect().left;
+ if(!x)return;
+ const first=cards[left],second=cards[right];
+ first.classList.add("swap-moving","swap-over");second.classList.add("swap-moving");
+ first.style.transform=`translate(${x}px,-18px)`;
+ second.style.transform=`translate(${-x}px,18px)`;
+ // New DOM holds the swapped values. Start them at their old positions and move into place.
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  first.style.transform="translate(0,0)";second.style.transform="translate(0,0)";
+ }));
+ const tidy=()=>{first.classList.remove("swap-moving","swap-over");second.classList.remove("swap-moving");first.style.transform="";second.style.transform=""};
+ setTimeout(tidy,800);
+}
+
 function render(){
  $("c").textContent=C;$("s").textContent=S;$("err").textContent=errors;
  if(alg==="bubble")renderBubble();
@@ -145,7 +170,7 @@ function advanceBubble(){
 function bubbleSwap(i,j,target){
  if(!((i===bI&&j===bI+1)||(j===bI&&i===bI+1))) return flashWrong(target,"Bubble Sort can only move the two highlighted neighbours.");
  if(a[bI]<=a[bI+1]) return flashWrong(target,"these cards are already in order. Use KEEP / NO SWAP.");
- [a[bI],a[bI+1]]=[a[bI+1],a[bI]];S++;advanceBubble();
+ const swapAt=bI;[a[bI],a[bI+1]]=[a[bI+1],a[bI]];S++;advanceBubble();animateCardExchange(swapAt,swapAt+1);
 }
 
 // ---------- SELECTION ----------
@@ -203,7 +228,7 @@ function selectionSwap(i,j,target){
  if(selPhase!=="swap") return flashWrong(target,"finish the full scan before swapping.");
  if(selMin===selPos) return flashWrong(target,"the minimum is already first; no swap is needed.");
  if(!((i===selMin&&j===selPos)||(j===selMin&&i===selPos))) return flashWrong(target,"swap only the MINIMUM with the FIRST UNSORTED card.");
- [a[selPos],a[selMin]]=[a[selMin],a[selPos]];S++;nextSelectionRound();
+ const left=selPos,right=selMin;[a[selPos],a[selMin]]=[a[selMin],a[selPos]];S++;nextSelectionRound();animateCardExchange(left,right);
 }
 
 // ---------- QUICK ----------
