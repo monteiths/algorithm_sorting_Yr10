@@ -138,9 +138,10 @@ function animateCardExchange(left,right,before){
  // cards with the ORIGINAL values visibly travel along opposite sweeping arcs.
  L.style.visibility="hidden";R.style.visibility="hidden";
  const overlay=document.createElement("div");
+ overlay.setAttribute("aria-hidden","true");
  overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:visible";
  document.body.appendChild(overlay);
- const duration=1150,dx=rr.left-lr.left,dy=rr.top-lr.top;
+ const duration=1850,dx=rr.left-lr.left,dy=rr.top-lr.top;
  const create=(value,rect)=>{
    const node=L.cloneNode(false);
    node.textContent=value;
@@ -149,15 +150,20 @@ function animateCardExchange(left,right,before){
    overlay.appendChild(node);return node;
  };
  const leftCard=create(before[left],lr),rightCard=create(before[right],rr);
- const easing="cubic-bezier(.38,.02,.23,1)";
+ const easing="cubic-bezier(.45,0,.55,1)";
+ const arc=Math.max(175,Math.min(235,window.innerHeight*.25));
  const up=leftCard.animate([
   {transform:"translate(0px,0px) scale(1)",offset:0},
-  {transform:`translate(${dx*.5}px,-95px) scale(1.15)`,offset:.5},
+  {transform:`translate(${dx*.22}px,${-arc*.8}px) rotate(-7deg) scale(1.17)`,offset:.25},
+  {transform:`translate(${dx*.5}px,${-arc}px) rotate(0deg) scale(1.24)`,offset:.5},
+  {transform:`translate(${dx*.78}px,${-arc*.8}px) rotate(7deg) scale(1.17)`,offset:.75},
   {transform:`translate(${dx}px,${dy}px) scale(1)`,offset:1}
  ],{duration,easing,fill:"forwards"});
  const down=rightCard.animate([
   {transform:"translate(0px,0px) scale(1)",offset:0},
-  {transform:`translate(${-dx*.5}px,95px) scale(1.15)`,offset:.5},
+  {transform:`translate(${-dx*.22}px,${arc*.8}px) rotate(7deg) scale(1.17)`,offset:.25},
+  {transform:`translate(${-dx*.5}px,${arc}px) rotate(0deg) scale(1.24)`,offset:.5},
+  {transform:`translate(${-dx*.78}px,${arc*.8}px) rotate(-7deg) scale(1.17)`,offset:.75},
   {transform:`translate(${-dx}px,${-dy}px) scale(1)`,offset:1}
  ],{duration,easing,fill:"forwards"});
  Promise.all([up.finished.catch(()=>{}),down.finished.catch(()=>{})]).then(()=>{
