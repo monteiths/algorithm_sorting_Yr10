@@ -318,7 +318,7 @@ function render(){
    stage.innerHTML=`${cards(base,e&&e.type==="classify"?[e.index]:[],[],pivotIndex)}${bins}`;
    if(e?.type==="classify"){
     const row=stage.querySelector(".cards");
-    [...row.children].forEach((card,k)=>{if(k<e.index)card.style.opacity=".35";});
+    [...row.children].forEach((card,k)=>{if(k<=e.index)card.style.visibility="hidden";});
    }
    $("c").textContent=e?e.scans:0;$("s").textContent=0;$("p").textContent=e?e.parts:0;
    $("msg").textContent=!e?`Choose the ${$("pivot").value} pivot (${pv}). The pivot is not moved. Scan the group from left to right and classify each card into LESS / EQUAL / GREATER.`:e.type==="partitionStart"?`New group: choose pivot ${e.pivot}. Do not move it; begin classifying from the left.`:e.type==="classify"?`Scan ${e.value}: place it in ${e.group.toUpperCase()}. Order of arrival is preserved.`:`Join sorted less + equal + sorted greater: ${e.joined.join(", ")}.`;
