@@ -316,6 +316,10 @@ function render(){
    }
    let bins=e&&e.type==="classify"?`<div class="bins"><div class="bin"><h3>LESS than ${pv}</h3>${cards(e.less)}</div><div class="bin"><h3>EQUAL to ${pv}</h3>${cards(e.equal)}</div><div class="bin"><h3>GREATER than ${pv}</h3>${cards(e.greater)}</div></div>`:"";
    stage.innerHTML=`${cards(base,e&&e.type==="classify"?[e.index]:[],[],pivotIndex)}${bins}`;
+   if(e?.type==="classify"){
+    const row=stage.querySelector(".cards");
+    [...row.children].forEach((card,k)=>{if(k<e.index)card.style.opacity=".35";});
+   }
    $("c").textContent=e?e.scans:0;$("s").textContent=0;$("p").textContent=e?e.parts:0;
    $("msg").textContent=!e?`Choose the ${$("pivot").value} pivot (${pv}). The pivot is not moved. Scan the group from left to right and classify each card into LESS / EQUAL / GREATER.`:e.type==="partitionStart"?`New group: choose pivot ${e.pivot}. Do not move it; begin classifying from the left.`:e.type==="classify"?`Scan ${e.value}: place it in ${e.group.toUpperCase()}. Order of arrival is preserved.`:`Join sorted less + equal + sorted greater: ${e.joined.join(", ")}.`;
    $("st").textContent="Watching";
@@ -411,6 +415,32 @@ async function animateSelectionFinalPlacement(current){
  overlay.remove();
  winnerSource.style.visibility="";
 }
+async function animateQuickClassification(event){
+ const stage=$("stage"),source=stage.querySelectorAll(":scope > .cards > .card")[event.index];
+ const binIndex={less:0,equal:1,greater:2}[event.group];
+ const target=stage.querySelectorAll(".bins > .bin")[binIndex]?.querySelector(".cards > .card:last-child");
+ if(!source||!target)return;
+ const start=source.getBoundingClientRect(),end=target.getBoundingClientRect();
+ // Hide the static copies until the moving card reaches the chosen group.
+ source.style.visibility="hidden";target.style.visibility="hidden";
+ const overlay=document.createElement("div");
+ overlay.setAttribute("aria-hidden","true");
+ overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999";
+ const ghost=source.cloneNode(true);
+ ghost.style.cssText=`position:absolute;left:${start.left}px;top:${start.top}px;width:${start.width}px;height:${start.height}px;display:grid;place-items:center;box-sizing:border-box;margin:0;box-shadow:0 10px 24px #3b225455`;
+ overlay.appendChild(ghost);document.body.appendChild(overlay);
+ const dx=end.left-start.left,dy=end.top-start.top;
+ const arc=Math.max(87.5,Math.min(117.5,window.innerHeight*.125));
+ const anim=ghost.animate([
+  {transform:"translate(0,0) scale(1)",offset:0},
+  {transform:`translate(${dx*.25}px,${dy*.25-arc*.7}px) scale(1.12)`,offset:.25},
+  {transform:`translate(${dx*.5}px,${dy*.5-arc}px) scale(1.18)`,offset:.5},
+  {transform:`translate(${dx*.75}px,${dy*.75-arc*.7}px) scale(1.12)`,offset:.75},
+  {transform:`translate(${dx}px,${dy}px) scale(1)`,offset:1}
+ ],{duration:1850,easing:"cubic-bezier(.45,0,.55,1)",fill:"forwards"});
+ await anim.finished.catch(()=>{});
+ overlay.remove();target.style.visibility="";source.style.visibility="hidden";
+}
 async function moveStep(direction){
  if(selectionAnimating)return;
  const alg=$("alg").value,steps=alg==="quick"?trace.events:trace.steps;
@@ -429,6 +459,9 @@ async function moveStep(direction){
    await animateSelectionFinalPlacement(current);
   }
   idx=nextIndex;render();
+  if(alg==="quick"&&direction>0&&incoming?.type==="classify"){
+   await animateQuickClassification(incoming);
+  }
   if(alg==="bubble"){
    const e=trace.steps[idx];
    if(e&&e.type==="decision"&&e.swap&&direction>0)animateCardExchange(e.i,e.j,e.before);
