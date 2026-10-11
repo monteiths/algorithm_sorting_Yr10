@@ -457,7 +457,7 @@ async function moveStep(direction){
  selectionAnimating=true;$("next").disabled=true;$("prev").disabled=true;
  try{
   const current=alg==="selection"?trace.steps[idx]:null;
-  const incoming=alg==="selection"?trace.steps[nextIndex]:null;
+  const incoming=alg==="selection"?trace.steps[nextIndex]:alg==="quick"?trace.events[nextIndex]:null;
   const forwardScan=direction>0&&current?.type==="scan";
   if(forwardScan){
    await animateSelectionTransition(current,incoming);
