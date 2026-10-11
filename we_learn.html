@@ -169,7 +169,7 @@ function animateCardExchange(left,right,before){
 
 
 let selectionAnimating=false;
-function animateSelectionHoldingAreas(reverse=false){
+function animateSelectionHoldingAreas(reverse=false,onlyCandidate=false,onlyMinimum=false){
  const stage=$("stage"),e=trace.steps[idx];
  if(!e||e.type!=="scan")return Promise.resolve();
  const bays=[stage.querySelector('[data-selection-dest="keep"]'),stage.querySelector('[data-selection-dest="new"]')];
@@ -181,6 +181,8 @@ function animateSelectionHoldingAreas(reverse=false){
  document.body.appendChild(overlay);
  const animations=[];
  bays.forEach((target,k)=>{
+  if(onlyCandidate&&k===0)return;
+  if(onlyMinimum&&k===1)return;
   const from=sources[k].getBoundingClientRect(),to=target.getBoundingClientRect();
   const dx=to.left-from.left,dy=to.top-from.top;
   const ghost=document.createElement("div");
@@ -309,18 +311,26 @@ async function moveStep(direction){
  if(nextIndex===idx)return;
  selectionAnimating=true;$("next").disabled=true;$("prev").disabled=true;
  try{
-  // Let the learner watch the physical cards return to their empty positions
-  // before the next comparison replaces the placeholders with real cards.
-  if(alg==="selection"&&trace.steps[idx]?.type==="scan"){
-   await animateSelectionHoldingAreas(true);
+  const current=alg==="selection"?trace.steps[idx]:null;
+  const incoming=alg==="selection"?trace.steps[nextIndex]:null;
+  const consecutiveScans=current?.type==="scan"&&incoming?.type==="scan"&&current.round===incoming.round;
+  // Keep the chosen minimum in its decision box while scanning later candidates.
+  // Only the rejected candidate travels back up; a newly smaller candidate
+  // takes over the minimum box at the next comparison.
+  if(current?.type==="scan"){
+   if(consecutiveScans){
+    await animateSelectionHoldingAreas(true,true);
+   }else{
+    await animateSelectionHoldingAreas(true);
+   }
   }
   idx=nextIndex;render();
   if(alg==="bubble"){
    const e=trace.steps[idx];
    if(e&&e.type==="decision"&&e.swap&&direction>0)animateCardExchange(e.i,e.j,e.before);
   }
-  if(alg==="selection"&&trace.steps[idx]?.type==="scan"){
-   await animateSelectionHoldingAreas(false);
+  if(incoming?.type==="scan"){
+   await animateSelectionHoldingAreas(false,consecutiveScans&&incoming.oldMin===current.min);
   }
  }finally{
   selectionAnimating=false;
