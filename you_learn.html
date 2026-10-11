@@ -141,7 +141,7 @@ function animateCardExchange(left,right,before){
  overlay.setAttribute("aria-hidden","true");
  overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:visible";
  document.body.appendChild(overlay);
- const duration=925,dx=rr.left-lr.left,dy=rr.top-lr.top;
+ const duration=1850,dx=rr.left-lr.left,dy=rr.top-lr.top;
  const create=(value,rect)=>{
    const node=L.cloneNode(false);
    node.textContent=value;
@@ -151,7 +151,7 @@ function animateCardExchange(left,right,before){
  };
  const leftCard=create(before[left],lr),rightCard=create(before[right],rr);
  const easing="cubic-bezier(.45,0,.55,1)";
- const arc=Math.max(175,Math.min(235,window.innerHeight*.25));
+ const arc=Math.max(87.5,Math.min(117.5,window.innerHeight*.125));
  const up=leftCard.animate([
   {transform:"translate(0px,0px) scale(1)",offset:0},
   {transform:`translate(${dx*.22}px,${-arc*.8}px) rotate(-7deg) scale(1.17)`,offset:.25},
