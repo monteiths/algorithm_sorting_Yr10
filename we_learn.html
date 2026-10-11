@@ -47,6 +47,7 @@ function bubbleTrace(input){
    if(swap){[a[i],a[i+1]]=[a[i+1],a[i]];S++;changed=true}
    steps.push({type:"decision",i,j:i+1,swap,before,after:[...a],C,S,pass:passes,finishedFrom:end});
   }
+  steps.push({type:"passEnd",after:[...a],C,S,pass:passes,finishedFrom:end,unchanged:!changed});
   if(!changed)break;
  }
  return {steps,result:a,C,S,passes};
@@ -119,13 +120,14 @@ function render(){
      return;
    }
    let e=idx<0?null:trace.steps[idx],arr=e?e.after:START,active=e?[e.i,e.j]:[],finished=[];
+   if(e&&e.type==="passEnd"){finished=Array.from({length:START.length-e.finishedFrom},(_,k)=>e.finishedFrom+k)}
    if(e&&e.type==="decision"){
      let next=trace.steps[idx+1];
-     if(!next||next.pass!==e.pass)finished=Array.from({length:START.length-e.finishedFrom},(_,k)=>e.finishedFrom+k);
+     // A card becomes green only at the explicit end-of-pass step.
    }
-   stage.innerHTML=cards(arr,active,finished);
+   stage.innerHTML=cards(arr,e&&e.type==="passEnd"?[]:active,finished);
    $("c").textContent=e?e.C:0;$("s").textContent=e?e.S:0;$("p").textContent=e?e.pass:0;
-   $("msg").textContent=!e?"Start at the left: compare 3 and 5.":e.type==="compare"?`Pass ${e.pass}: COMPARE ${e.before[e.i]} and ${e.before[e.j]}. Will they need swapping? Click Next to see the decision.`:`Pass ${e.pass}: ${e.swap?"SWAP the two highlighted cards":"KEEP the two highlighted cards in place"}. Then move right.`;
+   $("msg").textContent=!e?"Start at the left: compare 3 and 5.":e.type==="passEnd"?`Pass ${e.pass} finished: the largest value in the unsorted section has reached its final position (green). ${e.unchanged?"No swaps occurred, so the entire list is already sorted.":"Next pass we can skip the green cards because they cannot be displaced by any larger value remaining to their left."}`:e.type==="compare"?`Pass ${e.pass}: COMPARE ${e.before[e.i]} and ${e.before[e.j]}. Will they need swapping? Click Next to see the decision.`:`Pass ${e.pass}: ${e.swap?"SWAP the two highlighted cards":"KEEP the two highlighted cards in place"}. Then move right.`;
    $("st").textContent="Watching";
 
  }else if(alg==="selection"){
