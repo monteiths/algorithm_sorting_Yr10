@@ -137,7 +137,7 @@ function animateCardExchange(left,right,before){
  overlay.setAttribute("aria-hidden","true");
  overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:visible";
  document.body.appendChild(overlay);
- const duration=1850,dx=rr.left-lr.left,dy=rr.top-lr.top;
+ const duration=925,dx=rr.left-lr.left,dy=rr.top-lr.top;
  const create=(value,rect)=>{
    const node=L.cloneNode(false);
    node.textContent=value;
@@ -169,21 +169,38 @@ function animateCardExchange(left,right,before){
 
 
 function animateSelectionHoldingAreas(){
- const stage=$("stage"),bays=[["keep",stage.querySelector('[data-selection-dest="keep"]')],["new",stage.querySelector('[data-selection-dest="new"]')]];
- const e=trace.steps[idx];if(!e||e.type!=="scan")return;
- const positions=[e.oldMin,e.j];
- const sources=positions.map(i=>stage.querySelector('[data-source-index="'+i+'"]'));
- if(sources.some(x=>!x)||bays.some(x=>!x[1]))return;
- // The original positions stay empty. The actual values sweep down to their holding areas.
- bays.forEach(([name,target],k)=>{
+ const stage=$("stage"),e=trace.steps[idx];
+ if(!e||e.type!=="scan")return;
+ const bays=[stage.querySelector('[data-selection-dest="keep"]'),stage.querySelector('[data-selection-dest="new"]')];
+ const sources=[e.oldMin,e.j].map(i=>stage.querySelector('[data-source-index="'+i+'"]'));
+ if(bays.some(v=>!v)||sources.some(v=>!v))return;
+ // The card row retains dashed empty positions while the two actual card faces
+ // travel along wide, opposing sweeping arcs into their respective holding boxes.
+ const overlay=document.createElement("div");
+ overlay.setAttribute("aria-hidden","true");
+ overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:visible";
+ document.body.appendChild(overlay);
+ const animations=[];
+ bays.forEach((target,k)=>{
    const from=sources[k].getBoundingClientRect(),to=target.getBoundingClientRect();
-   const dx=from.left-to.left,dy=from.top-to.top;
-   target.animate([
-    {transform:`translate(${dx}px,${dy}px) scale(1.05)`,opacity:1},
-    {transform:`translate(${dx*.42}px,${dy*.4-35}px) scale(1.13)`,opacity:1,offset:.53},
-    {transform:"translate(0px,0px) scale(1)",opacity:1}
-   ],{duration:1050,easing:"cubic-bezier(.2,.75,.25,1)"});
+   const dx=to.left-from.left,dy=to.top-from.top;
+   const ghost=target.cloneNode(false);
+   ghost.textContent=e.state[k===0?e.oldMin:e.j];
+   ghost.className="selection-bay-card";
+   ghost.style.cssText=`position:absolute;margin:0;left:${from.left}px;top:${from.top}px;width:${from.width}px;height:${from.height}px;display:grid;place-items:center;box-sizing:border-box;background:var(--yellow);border:2px solid var(--yellowLine);border-radius:9px;font-size:2.15rem;font-weight:900;color:#8b6500;box-shadow:0 10px 24px #3b225455`;
+   overlay.appendChild(ghost);
+   target.style.visibility="hidden";
+   const sweep=k===0?-105:105;
+   const animation=ghost.animate([
+     {transform:"translate(0px,0px) scale(1)",offset:0},
+     {transform:`translate(${dx*.25}px,${dy*.25+sweep*.7}px) scale(1.12)`,offset:.25},
+     {transform:`translate(${dx*.5}px,${dy*.5+sweep}px) scale(1.2)`,offset:.5},
+     {transform:`translate(${dx*.75}px,${dy*.75+sweep*.7}px) scale(1.12)`,offset:.75},
+     {transform:`translate(${dx}px,${dy}px) scale(1)`,offset:1}
+   ],{duration:1300,easing:"cubic-bezier(.45,0,.55,1)",fill:"forwards"});
+   animations.push(animation.finished.catch(()=>{}));
  });
+ Promise.all(animations).then(()=>{overlay.remove();bays.forEach(v=>v.style.visibility="")});
 }
 
 function render(){
