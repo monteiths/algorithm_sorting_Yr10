@@ -332,6 +332,22 @@ async function animateSelectionTransition(current,incoming){
  }else{
   travel(current.state[current.j],fromCandidate,candidatePosition?.getBoundingClientRect());
  }
+ // When this was the last comparison of the round, return the held
+ // minimum to its original numbered slot before showing the round-ending swap.
+ if(incoming?.type!=="scan"){
+  const winningMinPosition=current.min;
+  const minPlaceholder=stage.querySelector('[data-source-index="'+winningMinPosition+'"]');
+  const minFrom=winning?fromKeep:fromKeep;
+  if(winning){
+   // The new minimum has just moved from candidate to keep; continue home
+   // after that movement so students can follow the same physical card.
+   await Promise.all(animations);
+   animations.length=0;
+  }
+  if(minPlaceholder){
+   travel(current.state[winningMinPosition],minFrom,minPlaceholder.getBoundingClientRect());
+  }
+ }
  // The next candidate is the only new card brought down from the unsorted row.
  if(incoming?.type==="scan"&&nextPosition){
   travel(incoming.state[incoming.j],nextPosition.getBoundingClientRect(),fromCandidate);
