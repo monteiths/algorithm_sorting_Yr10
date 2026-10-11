@@ -273,7 +273,7 @@ function render(){
      const candidate=e.state[e.j];
      $("msg").textContent=`Round ${e.round}: scan ${candidate}. ${e.min===e.j?candidate+" becomes the new minimum.":"It is not smaller than the current minimum. Keep scanning."}`;
    }else if(e.type==="selswap"){
-     $("msg").textContent=`Round ${e.round}: scan complete. Swap the minimum ${e.before[e.min]} into the first unsorted position.`;
+     $("msg").textContent=`Round ${e.round}: we found the lowest value ${e.before[e.min]}. It moves to the leftmost unsorted position; the displaced card takes its previous place.`;
    }else{
      $("msg").textContent=`Round ${e.round} complete. Position ${e.pos+1} is finished.`;
    }
@@ -332,21 +332,12 @@ async function animateSelectionTransition(current,incoming){
  }else{
   travel(current.state[current.j],fromCandidate,candidatePosition?.getBoundingClientRect());
  }
- // When this was the last comparison of the round, return the held
- // minimum to its original numbered slot before showing the round-ending swap.
- if(incoming?.type!=="scan"){
-  const winningMinPosition=current.min;
-  const minPlaceholder=stage.querySelector('[data-source-index="'+winningMinPosition+'"]');
-  const minFrom=winning?fromKeep:fromKeep;
-  if(winning){
-   // The new minimum has just moved from candidate to keep; continue home
-   // after that movement so students can follow the same physical card.
-   await Promise.all(animations);
-   animations.length=0;
-  }
-  if(minPlaceholder){
-   travel(current.state[winningMinPosition],minFrom,minPlaceholder.getBoundingClientRect());
-  }
+ // At the end of a round, leave the winning minimum in its holding box.
+ // Its direct journey to the leftmost unsorted position happens in the next
+ // explicit confirmation/placement step, not via its original position.
+ if(incoming?.type!=="scan"&&winning){
+  await Promise.all(animations);
+  animations.length=0;
  }
  // Finish the previous comparison completely before introducing the next card.
  await Promise.all(animations);
@@ -359,6 +350,44 @@ async function animateSelectionTransition(current,incoming){
 
  overlay.remove();
 }
+async function animateSelectionFinalPlacement(current){
+ const stage=$("stage"),track=[...stage.querySelectorAll(".selection-track > *")];
+ const keep=stage.querySelector('[data-selection-dest="keep"]');
+ const candidate=stage.querySelector('[data-selection-dest="new"]');
+ if(!keep||!track[current.pos]||!track[current.min])return;
+ const minimum=current.state[current.min],displaced=current.state[current.pos];
+ const winnerSource=current.min===current.j?candidate:keep;
+ // The final candidate may just have replaced the old minimum. The winning
+ // value is held below the list until this separate placement animation.
+ const from=winnerSource.getBoundingClientRect();
+ const to=track[current.pos].getBoundingClientRect();
+ const overlay=document.createElement("div");
+ overlay.setAttribute("aria-hidden","true");
+ overlay.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:9999";
+ document.body.appendChild(overlay);
+ const motions=[];
+ function move(value,start,finish,green=false){
+  const ghost=document.createElement("div");
+  ghost.textContent=value;ghost.className="selection-bay-card";
+  ghost.style.cssText=`position:absolute;left:${start.left}px;top:${start.top}px;width:${start.width}px;height:${start.height}px;margin:0;display:grid;place-items:center;box-sizing:border-box;border:3px solid ${green?"#27945c":"var(--yellowLine)"};border-radius:9px;background:${green?"#c8f1d7":"var(--yellow)"};color:${green?"#116444":"#8b6500"};font-size:2.15rem;font-weight:900;box-shadow:0 10px 24px #3b225455`;
+  overlay.appendChild(ghost);
+  const dx=finish.left-start.left,dy=finish.top-start.top;
+  const anim=ghost.animate([{transform:"translate(0,0)"},{transform:`translate(${dx*.5}px,${dy*.5-55}px) scale(1.13)`,offset:.5},{transform:`translate(${dx}px,${dy}px)`}],{duration:1350,easing:"cubic-bezier(.45,0,.55,1)",fill:"forwards"});
+  motions.push(anim.finished.catch(()=>{}));
+ }
+ $("msg").textContent=`We have found the lowest value in the unsorted list: ${minimum}. Move it directly to the leftmost unsorted position!`;
+ winnerSource.style.visibility="hidden";
+ move(minimum,from,to,true);
+ if(current.min!==current.pos){
+  // The displaced leftmost card moves to the minimum's old slot: one swap.
+  const displacedStart=track[current.pos].getBoundingClientRect();
+  const displacedEnd=track[current.min].getBoundingClientRect();
+  move(displaced,displacedStart,displacedEnd);
+ }
+ await Promise.all(motions);
+ overlay.remove();
+ winnerSource.style.visibility="";
+}
 async function moveStep(direction){
  if(selectionAnimating)return;
  const alg=$("alg").value,steps=alg==="quick"?trace.events:trace.steps;
@@ -370,8 +399,10 @@ async function moveStep(direction){
   const incoming=alg==="selection"?trace.steps[nextIndex]:null;
   const forwardScan=direction>0&&current?.type==="scan";
   if(forwardScan){
-   // Show the minimum remaining in place, or the candidate taking its place.
    await animateSelectionTransition(current,incoming);
+   if(incoming?.type==="selswap"||incoming?.type==="selfixed"){
+    await animateSelectionFinalPlacement(current);
+   }
   }
   idx=nextIndex;render();
   if(alg==="bubble"){
