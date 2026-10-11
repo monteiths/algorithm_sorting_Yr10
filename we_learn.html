@@ -26,6 +26,11 @@ select,input,button{font:inherit;border:1px solid var(--line);border-radius:8px;
 @media print{body>*:not(main),main>*:not(.cert){display:none!important}.cert{display:block!important}}
 
 
+
+/* Card exchange: two cards visibly cross paths rather than teleport. */
+.card.swap-moving{z-index:3;transition:transform 750ms cubic-bezier(.25,.7,.25,1);will-change:transform}
+.card.swap-moving.swap-over{z-index:4}
+@media(prefers-reduced-motion:reduce){.card.swap-moving{transition-duration:0ms}}
 </style></head><body>
 <header><div class="kicker">TECHQUITY / COMPUTER SCIENCE / WE LEARN</div><h1>Sorting with five cards</h1><div class="lead">Start unsorted: <b>3, 5, 2, 3, 1</b>. Follow exactly the same routines as the teacher card resource.</div></header><main>
 <div class="panel controls"><label>Algorithm<select id="alg"><option value="bubble">Bubble Sort</option><option value="selection">Selection Sort</option><option value="quick">Quick Sort</option></select></label><label id="pivotWrap" style="display:none">Pivot rule<select id="pivot"><option value="first">First card</option><option value="last">Last card</option><option value="middle">Middle position</option></select></label><button id="reset">Reset</button><button id="prev">← Previous</button><button id="next" class="primary">Next →</button></div>
@@ -107,6 +112,26 @@ function selfTests(){
 let idx=-1,trace=null;
 function cards(arr,active=[],finished=[],pivotIndex=null){return `<div class="cards">${arr.map((v,i)=>`<div class="card ${active.includes(i)?"active":""} ${finished.includes(i)?"finished":""} ${pivotIndex===i?"pivot":""}">${v}</div>`).join("")}</div>`}
 function reset(){idx=-1;let alg=$("alg").value;$("pivotWrap").style.display=alg==="quick"?"grid":"none";trace=alg==="bubble"?bubbleTrace(START):alg==="selection"?selectionTrace(START):quickTrace(START,$("pivot").value);render()}
+
+// Animate a genuine exchange from the previous card positions to the new positions.
+// Call after the new cards have been rendered; no algorithm counts are affected.
+function animateCardExchange(left,right){
+ const cards=[...document.querySelectorAll("#stage > .cards > .card")];
+ if(!cards[left]||!cards[right])return;
+ const x=cards[right].getBoundingClientRect().left-cards[left].getBoundingClientRect().left;
+ if(!x)return;
+ const first=cards[left],second=cards[right];
+ first.classList.add("swap-moving","swap-over");second.classList.add("swap-moving");
+ first.style.transform=`translate(${x}px,-18px)`;
+ second.style.transform=`translate(${-x}px,18px)`;
+ // New DOM holds the swapped values. Start them at their old positions and move into place.
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  first.style.transform="translate(0,0)";second.style.transform="translate(0,0)";
+ }));
+ const tidy=()=>{first.classList.remove("swap-moving","swap-over");second.classList.remove("swap-moving");first.style.transform="";second.style.transform=""};
+ setTimeout(tidy,800);
+}
+
 function render(){
  let alg=$("alg").value,stage=$("stage");$("prev").disabled=idx<0;
 
@@ -187,6 +212,6 @@ function render(){
    $("st").textContent="Watching";
  }
 }
-$("next").onclick=()=>{let n=$("alg").value==="quick"?trace.events.length:trace.steps.length;if(idx<n)idx++;render()};$("prev").onclick=()=>{if(idx>=0)idx--;render()};$("reset").onclick=reset;$("alg").onchange=reset;$("pivot").onchange=reset;reset();
+$("next").onclick=()=>{let n=$("alg").value==="quick"?trace.events.length:trace.steps.length;if(idx<n)idx++;render();const e=$("alg").value==="bubble"?trace.steps[idx]:null;if(e&&e.type==="decision"&&e.swap)animateCardExchange(e.i,e.j)};$("prev").onclick=()=>{if(idx>=0)idx--;render()};$("reset").onclick=reset;$("alg").onchange=reset;$("pivot").onchange=reset;reset();
 let f=selfTests();if(location.search.includes("selftest")){$("selftest").style.display="block";$("selftest").textContent=f.length?"SELFTEST FAIL: "+f.join(", "):"SELFTEST PASS";}
 </script></body></html>
