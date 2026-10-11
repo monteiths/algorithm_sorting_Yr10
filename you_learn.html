@@ -135,7 +135,7 @@ function renderBubble(){
  const i=bI,j=i+1,need=a[i]>a[j];
  $("stage").innerHTML=`<div class="cards">${a.map((v,k)=>card(v,k,k===i||k===j?"active":k>bEnd?"finished":"",k===i?"LEFT":k===j?"RIGHT":"")).join("")}</div>
  <div class="dropzone" data-zone="keep">DROP A HIGHLIGHTED CARD HERE TO KEEP / NO SWAP</div>`;
- setMsg(`Pass ${bPass}: compare ${a[i]} and ${a[j]}. ${need?"If they are out of order, drag one highlighted card onto the other.":"If they are already in order, drag either highlighted card to KEEP / NO SWAP."}`);
+ setMsg(`${bI===0&&bPass>1?`Pass ${bPass}: the ${bPass-1} green card(s) at the right are already in their final positions, because each previous pass moved the largest remaining card to the end. We compare only the unsorted section. `:""}Compare ${a[i]} and ${a[j]}. ${need?"If they are out of order, drag one highlighted card onto the other.":"If they are already in order, drag either highlighted card to KEEP / NO SWAP."}`);
 }
 function advanceBubble(){
  C++;bI++;
